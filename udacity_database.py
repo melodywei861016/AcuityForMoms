@@ -4,6 +4,7 @@ response = urllib.request.urlopen('https://udacity.com/public-api/v0/courses')
 json_response = json.loads(response.read())
 database = []
 for course in json_response['courses']:
+    
     dictionary = {}
     dictionary['title'] = course['title']
     dictionary['homepage'] = course['homepage']
@@ -12,12 +13,13 @@ for course in json_response['courses']:
     dictionary['prerequisites'] = course['required_knowledge']
     dictionary['expected learning'] = course['expected_learning']
     dictionary['image'] = course['image']
-    dictionary['owner name'] = course['affiliates']['name'] #not sure if this works
+    if course['affiliates'] != []: #some of the courses' affiliates key lead to empty lists
+        dictionary['owner name'] = course['affiliates'][0]['name']
     dictionary['time to complete'] = course['expected_duration'] + " " + course[expected_duration_unit]
     dictionary['price'] = degrees['homepage'] #leads to the homepage of the degree 
+    dictionary['availablility_status'] = course['full_course_available']
     
     print (course['title'])
-    print (course['affiliates'])
 
 
 """The important data that we need:
