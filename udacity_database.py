@@ -33,11 +33,13 @@ for track in json_response['tracks']:
     for course in track['courses']:
         categorized_courses[track_name].append(course)
 
-for elem in categorized_courses.values():
-    #key is the subject/track name (Ex. 'Data Science'), value is a list of course names/keys that can be used to reference to their dictionaries using database[course_name]
-    for course in elem:
-        print (course)
-        print (database[course])
+def display_categorized_courses():
+    for category in categorized_courses.values():
+        #CATEGORY is a list of all courses that belong under the same subject category
+        #For categorized_courses, a key is the subject/track name (Ex. 'Data Science'), a value is a list of course names/keys that can be used to reference to their dictionaries using database[course_name]
+        for course in category:
+            print (course)
+            print (database[course])
 
 
 
