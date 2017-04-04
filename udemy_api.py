@@ -56,11 +56,11 @@ def create_database():
 
 
 #Reading the file where the database is stored as a dictionary
-#Maybe put this in another file in the same folder as the UdemyDatabaseFile.txt file 
-with open('UdemyDatabaseFile.txt', 'rb') as myFile:
-	pulledDictionary = pickle.load(myFile)
+def read_database_file():
+	with open('UdemyDatabaseFile.txt', 'rb') as myFile:
+		pulledDictionary = pickle.load(myFile)
 
-print (pulledDictionary)
+
 
 
 

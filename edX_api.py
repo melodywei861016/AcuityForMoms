@@ -1,5 +1,6 @@
 import requests, json, pickle
 from requests.auth import HTTPBasicAuth
+from datetime import datetime
 
 import requests # pip install requests
 
@@ -31,48 +32,42 @@ json_response = make_response('https://api.edx.org/catalog/v1/catalogs/' + str(f
 
 
 database = {}
-
-index = len(json_response['results']) - 1
+pulledDictionary = {}
 
 #Adding EdX courses to the database
 def create_database():
-	global index
-	while index >= 0:
+	for course in json_response['results']:
+	    dictionary_elem = course['key']
+	    database[dictionary_elem] = {} #the course's key is the key to the dictionary. Its corresponding value is a dictionary of the course's components (time, cost, etc.)
 
-	    dictionary_elem = json_response['results'][index]['key']
-	    database[dictionary_elem] = {} #the json_response['results'][index]'s key is the key to the dictionary. Its corresponding value is a dictionary of the json_response['results'][index]'s components (time, cost, etc.)
-
-	    database[dictionary_elem]['title'] = json_response['results'][index]['title']
-	    database[dictionary_elem]['homepage'] = json_response['results'][index]['marketing_url']
-	    database[dictionary_elem]['short description'] = json_response['results'][index]['short_description']
-	    database[dictionary_elem]['level'] = json_response['results'][index]['level_type'] 
-	    database[dictionary_elem]['prerequisites'] = json_response['results'][index]['prerequisites']
-	    database[dictionary_elem]['expected learning'] = json_response['results'][index]['expected_learning_items']
-	    database[dictionary_elem]['image'] = json_response['results'][index]['image']['src']
-	    database[dictionary_elem]['owner name'] = json_response['results'][index]['owners'][0]['name']
-
-	    """
-	    if course['course_runs'][0]['start'] != 'None':
-	    	#subtract the date to get weeks
-	    	duration = course['course_runs'][0]['end'] - course['course_runs'][0]['start']
-	    	total_time = duration * course['course_runs'][0]['min_effort'] #the total number of minimum hours over all the weeks
-	    else:
-	    	total_time = 'up to user'
-	    database[dictionary_elem]['time to complete'] = total_time
-	    """
-
-	    database[dictionary_elem]['price'] = json_response['results'][index]['course_runs'][0]['seats'][0]['price'] + ' ' + json_response['results'][index]['course_runs'][0]['seats'][0]['currency']
-	    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
-	    with open('EdXDatabaseFile.txt', 'wb') as myFile:
-	    	pickle.dump(database, myFile)
-
-	    print(index)
-	    index -= 1
+	    database[dictionary_elem]['title'] = course['title']
+	    database[dictionary_elem]['homepage'] = course['marketing_url']
+	    database[dictionary_elem]['short description'] = course['short_description']
+	    database[dictionary_elem]['level'] = course['level_type'] 
+	    database[dictionary_elem]['prerequisites'] = course['prerequisites']
+	    database[dictionary_elem]['expected learning'] = course['expected_learning_items']
+	    database[dictionary_elem]['image'] = course['image']['src']
+	    database[dictionary_elem]['owner name'] = course['owners'][0]['name']	    
 	    
+	    if course['course_runs'][0]['start'] != None and course['course_runs'][0]['end'] != None:
+	    	#subtract the date to get weeks
+	    	start_date = datetime.strptime(course['course_runs'][0]['start'][:19], "%Y-%m-%dT%H:%M:%S")
+	    	end_date = datetime.strptime(course['course_runs'][0]['end'][:19], "%Y-%m-%dT%H:%M:%S")
+	    	duration = (end_date - start_date).days//7 #duration length in weeks
+	    else:
+	    	duration = 'undetermined'
+	    database[dictionary_elem]['time to complete'] = duration
+	    
+	    database[dictionary_elem]['price'] = course['course_runs'][0]['seats'][0]['price'] + ' ' + course['course_runs'][0]['seats'][0]['currency']
+	    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
+	    
+	with open('EdXDatabaseFile.txt', 'wb') as myFile:
+		pickle.dump(database, myFile)
 
-
-with open('EdXDatabaseFile.txt', 'rb') as myFile:
-	pulledDictionary = pickle.load(myFile)
+def read_database_file():
+	global pulledDictionary
+	with open('EdXDatabaseFile.txt', 'rb') as myFile:
+		pulledDictionary = pickle.load(myFile)
 
 
 
