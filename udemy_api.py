@@ -48,6 +48,17 @@ def create_database():
 			#course_category_id = course_category_response['primary_category']['id']
 			#course_category_name = course_category_response['primary_category']['title']
 			
+			page = requests.get(database[dictionary_elem]['homepage'])
+			soup = BeautifulSoup(page.content, 'html.parser')
+			database[dictionary_elem]['prerequisites'] = soup.find_all(class_='requirements__item')[0].get_text()
+			expected_learn = soup.find_all(class_='what-you-get__text')
+			expected_learn_string = ""
+			for i in expected_learn:
+				expected_learn_string += i.get_text() + ", "
+			database[dictionary_elem]['expected learning'] = expected_learn_string
+			database[dictionary_elem]['time to complete'] = soup.find_all(class_='curriculum-header-length')[0].get_text() 
+			database[dictionary_elem]['owner name'] = soup.find_all(class_='instructor__job-title')[0].get_text()
+			
 		
 		with open('UdemyDatabaseFile.txt', 'wb') as myFile:
 				pickle.dump(database, myFile)
