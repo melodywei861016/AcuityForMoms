@@ -54,7 +54,7 @@ def create_database():
 			expected_learn = soup.find_all(class_='what-you-get__text')
 			expected_learn_string = ""
 			for i in expected_learn:
-				expected_learn_string += i.get_text() + ", "
+				expected_learn_string += i.get_text() + "\n"
 			database[dictionary_elem]['expected learning'] = expected_learn_string
 			database[dictionary_elem]['time to complete'] = soup.find_all(class_='curriculum-header-length')[0].get_text() 
 			database[dictionary_elem]['owner name'] = soup.find_all(class_='instructor__job-title')[0].get_text()
