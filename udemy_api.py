@@ -36,11 +36,8 @@ def create_database():
 			database[dictionary_elem]['level'] = level_response['instructional_level']
 			database[dictionary_elem]['image'] = course['image_480x270']
 			database[dictionary_elem]['price'] = course['price']
+			database[dictionary_elem]['rating'] = course['avg_rating']
 		    
-		    #database[dictionary_elem]['prerequisites']
-		    #database[dictionary_elem]['expected learning']
-		    #database[dictionary_elem]['owner name']
-		    #database[dictionary_elem]['time to complete'] = str(course['expected_duration']) + " " + course['expected_duration_unit']
 		    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
 		    
 		    #Getting the category of the course
