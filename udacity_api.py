@@ -1,58 +1,61 @@
 import json
-import urllib
 import urllib.request
-import httplib2
-from bs4 import BeautifulSoup
-
-def make_soup(url):
-    thepage = urllib.request.urlopen(url)
-    soupdata = BeautifulSoup(thepage, "html.parser")
-    return soupdata
-
-def webpage_exists(webpage):
-    c = httplib2.Http()
-    response = c.request(webpage, 'HEAD')
-    return int(response[0]['status']) < 400
-
-def udacity_course_attributes(course_url, attribute):
-    """attributes: time, cost, skill level, description"""
-    def adjust_attribute_string():
-        nonlocal attribute
-        if attribute == 'time':
-            attribute = 'Timeline'
-        elif attribute == 'cost':
-            attribute = 'Course Cost'
-        elif attribute == 'skill level':
-            attribute = 'Skill Level'
-    adjust_attribute_string()
-    soup = make_soup(course_url)
-    if attribute == 'Timeline' or attribute == 'Course Cost' or attribute == 'Skill Level':
-        return time_cost_skill_level_of_course(soup, attribute)
-    elif attribute == 'description':
-        return description_of_course()
-    
-def time_cost_skill_level_of_course(soup, attribute):
-    for section in soup.findAll('div', {'class':'col'}):
-        for header in section.findAll('h6'):
-            if header.get_text()==attribute:
-                for result in section.findAll('h5'):
-                    result = result.get_text().strip()
-    return result
-
-def description_of_course(soup):
-    for section in soup.findAll('div', {'class':'information__summary'}):
-        for paragraph in section.findAll('p'):
-            description = paragraph.get_text()
-    return description
-
-
-#Udacity API (loops through all Udacity courses)
 response = urllib.request.urlopen('https://udacity.com/public-api/v0/courses')
 json_response = json.loads(response.read())
-for course in json_response['courses']:
-    if webpage_exists(course['homepage']):
-        try:
-            print(course['title'] + ": " + udacity_course_attributes(course['homepage'], 'time'))
-        except UnboundLocalError:
-            print ('Different page layout: ' + course['title'] + ' @ ' + course['homepage'])
+database = {}
 
+#Adding Udacity courses to the database
+def create_database():
+    for course in json_response['courses']:
+        dictionary_elem = course['key']
+        database[dictionary_elem] = {} #the course's key is the key to the dictionary. Its corresponding value is a dictionary of the course's components (time, cost, etc.)
+
+        database[dictionary_elem]['title'] = course['title']
+        database[dictionary_elem]['homepage'] = course['homepage']
+        database[dictionary_elem]['short description'] = course['short_summary']
+        database[dictionary_elem]['level'] = course['level'] + str(course['starter']) #course['starter'] tells if the course is a starter course or not (true/false)
+        database[dictionary_elem]['prerequisites'] = course['required_knowledge']
+        database[dictionary_elem]['expected learning'] = course['expected_learning']
+        database[dictionary_elem]['image'] = course['image']
+        if course['affiliates'] != []: #some of the courses' affiliates key lead to empty lists
+            database[dictionary_elem]['owner name'] = course['affiliates'][0]['name']
+        database[dictionary_elem]['time to complete'] = str(course['expected_duration']) + " " + course['expected_duration_unit']
+        # database[dictionary_elem]['price'] =  
+        database[dictionary_elem]['availablility_status'] = course['full_course_available']
+
+    with open('UdacityDatabaseFile.json', 'w') as myFile:
+        json.dump(database, myFile)
+
+categorized_courses = {}
+for track in json_response['tracks']:
+    track_name = track['name']
+    categorized_courses[track_name] = []
+    for course in track['courses']:
+        categorized_courses[track_name].append(course)
+
+def display_categorized_courses():
+    for category in categorized_courses.values():
+        #CATEGORY is a list of all courses that belong under the same subject category
+        #For categorized_courses, a key is the subject/track name (Ex. 'Data Science'), a value is a list of course names/keys that can be used to reference to their dictionaries using database[course_name]
+        for course in category:
+            print (course)
+            print (database[course])
+
+def read_database_json_file():
+    return json.loads(open('UdacityDatabaseFile.json').read())
+
+
+
+"""The important data that we need:
+title
+homepage
+short description
+level
+prerequisites
+expected learning
+image 
+owner name (what university)
+time to complete
+price
+if free price of the certificate
+time frame when you can follow the course (some courses are not always available)"""

@@ -1,4 +1,4 @@
-import requests, json, pickle, urllib, urllib.request, htplib2
+import requests, json, pickle, urllib, urllib.request, httplib2
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
 
@@ -58,10 +58,9 @@ def create_database():
 			database[dictionary_elem]['expected learning'] = expected_learn_string
 			database[dictionary_elem]['time to complete'] = soup.find_all(class_='curriculum-header-length')[0].get_text() 
 			database[dictionary_elem]['owner name'] = soup.find_all(class_='instructor__job-title')[0].get_text()
-			
-		
-		with open('UdemyDatabaseFile.txt', 'wb') as myFile:
-			pickle.dump(database, myFile)
+
+		with open('UdemyDatabaseFile.json', 'w') as myFile:
+			json.dump(database, myFile)
 
 
 		current_url = json_response['next']
@@ -70,9 +69,12 @@ def create_database():
 
 
 #Reading the file where the database is stored as a dictionary
-def read_database_file():
+def read_database_text_file():
 	with open('UdemyDatabaseFile.txt', 'rb') as myFile:
 		pulledDictionary = pickle.load(myFile)
+
+def read_database_json_file():
+	return json.loads(open('UdemyDatabaseFile.json').read())
 
 #Methods for Beautiful Soup
 def make_soup(url):
