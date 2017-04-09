@@ -61,7 +61,7 @@ def create_database():
 			
 		
 		with open('UdemyDatabaseFile.txt', 'wb') as myFile:
-				pickle.dump(database, myFile)
+			pickle.dump(database, myFile)
 
 
 		current_url = json_response['next']

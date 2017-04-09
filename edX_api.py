@@ -61,13 +61,16 @@ def create_database():
 	    database[dictionary_elem]['price'] = course['course_runs'][0]['seats'][0]['price'] + ' ' + course['course_runs'][0]['seats'][0]['currency']
 	    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
 	    
-	with open('EdXDatabaseFile.txt', 'wb') as myFile:
-		pickle.dump(database, myFile)
+	with open('EdXDatabaseFile.json', 'w') as myFile:
+		json.dump(database, myFile)
 
-def read_database_file():
+def read_database_text_file():
 	global pulledDictionary
 	with open('EdXDatabaseFile.txt', 'rb') as myFile:
 		pulledDictionary = pickle.load(myFile)
+
+def read_database_json_file():
+	return json.loads(open('EdXDatabaseFile.json').read())
 
 
 
