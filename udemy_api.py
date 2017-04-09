@@ -1,5 +1,6 @@
-import requests, json, pickle
+import requests, json, pickle, urllib, urllib.request, htplib2
 from requests.auth import HTTPBasicAuth
+from bs4 import BeautifulSoup
 
 database = {}
 
@@ -46,7 +47,9 @@ def create_database():
 		    #course_category_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=primary_category'.format(course['id']))
 			#course_category_id = course_category_response['primary_category']['id']
 			#course_category_name = course_category_response['primary_category']['title']
-			with open('UdemyDatabaseFile.txt', 'wb') as myFile:
+			
+		
+		with open('UdemyDatabaseFile.txt', 'wb') as myFile:
 				pickle.dump(database, myFile)
 
 
@@ -59,6 +62,19 @@ def create_database():
 def read_database_file():
 	with open('UdemyDatabaseFile.txt', 'rb') as myFile:
 		pulledDictionary = pickle.load(myFile)
+
+#Methods for Beautiful Soup
+def make_soup(url):
+    thepage = urllib.request.urlopen(url)
+    soupdata = BeautifulSoup(thepage, "html.parser")
+    return soupdata
+
+def webpage_exists(webpage):
+    c = httplib2.Http()
+    response = c.request(webpage, 'HEAD')
+    return int(response[0]['status']) < 400
+
+
 
 
 
