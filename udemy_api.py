@@ -36,38 +36,31 @@ def create_database():
 			database[dictionary_elem]['level'] = level_response['instructional_level']
 			database[dictionary_elem]['image'] = course['image_480x270']
 			database[dictionary_elem]['price'] = course['price']
-			# database[dictionary_elem]['rating'] = course['avg_rating']
-		    
-		    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
-		    
-		    #Getting the category of the course
-		    #course_category_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=primary_category'.format(course['id']))
-			#course_category_id = course_category_response['primary_category']['id']
-			#course_category_name = course_category_response['primary_category']['title']
+			ratings_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=avg_rating'.format(course['id']))
+			database[dictionary_elem]['rating'] = ratings_response['avg_rating']
 			
-			page = requests.get(database[dictionary_elem]['homepage'])
-			print(database[dictionary_elem]['homepage'])
-			soup = BeautifulSoup(page.content, 'html.parser')
+			#Webscraping code to get the rest of the class attributes
+			soup = make_soup(database[dictionary_elem]['homepage'])
 			expected_learn = soup.find_all(class_='what-you-get__text')
 			expected_learn_string = ""
 			for i in expected_learn:
-                expected_learn_string += i.get_text() + "\n"
+				expected_learn_string += i.get_text() + "\n"
 			database[dictionary_elem]['expected learning'] = expected_learn_string
-			database[dictionary_elem]['time to complete'] = soup.find_all(class_='curriculum-header-length')[0].get_text().strip() 
-			database[dictionary_elem]['owner name'] = soup.find_all(class_='instructor__job-title')[0].get_text().strip()
-			pre_req = soup.find_all(class_='requirements__item')
-			if len(pre_req) == 0:
-                database[dictionary_elem]['prerequisites'] = "none"
-            else:
-                database[dictionary_elem]['prerequisites'] = pre_req[0].get_text()
+			database[dictionary_elem]['time to complete'] = soup.find(class_='curriculum-header-length').get_text().strip() 
+			database[dictionary_elem]['owner name'] = soup.find(class_='instructor__job-title').get_text().strip()
+			pre_req = soup.find(class_='requirements__item')
+			if pre_req is None:
+				database[dictionary_elem]['prerequisites'] = "N/A"
+			else:
+				database[dictionary_elem]['prerequisites'] = pre_req.get_text()
 
 		with open('UdemyDatabaseFile.json', 'w') as myFile:
 			json.dump(database, myFile)
 
-
 		current_url = json_response['next']
 		print(current_url)
 		json_response = make_response(current_url)
+
 
 
 #Reading the file where the database is stored as a dictionary
