@@ -1,8 +1,12 @@
 import requests, json, pickle
 from requests.auth import HTTPBasicAuth
 from datetime import datetime
-
 import requests # pip install requests
+import urllib
+import urllib.request
+import httplib2
+from bs4 import BeautifulSoup
+
 
 url = 'https://api.edx.org/oauth2/v1/access_token'
 r = requests.post(url, dict(
@@ -16,6 +20,11 @@ access_token = json.loads(r.text)['access_token']
 headers = {
     'Authorization': 'JWT ' + access_token,
 }
+
+def make_soup(url):
+    thepage = urllib.request.urlopen(url)
+    soupdata = BeautifulSoup(thepage, "lxml")
+    return soupdata
 
 def make_response(url):
 	response = requests.get(url, headers=headers)
@@ -60,9 +69,28 @@ def create_database():
 	    
 	    database[dictionary_elem]['price'] = course['course_runs'][0]['seats'][0]['price'] + ' ' + course['course_runs'][0]['seats'][0]['currency']
 	    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
+	    #database[dictionary_elem]['rating'] = 
 	    
 	with open('EdXDatabaseFile.json', 'w') as myFile:
 		json.dump(database, myFile)
+
+def test():
+	return get_rating(make_soup('https://www.edx.org/course/smart-cities-ethx-ethx-fc-03x-0'))
+
+
+def get_rating(soup):
+	return soup
+    #return soup.find('span', {'class':'ct-widget-stars'})
+    #return result
+
+def time_cost_skill_level_of_course(soup, attribute):
+    for section in soup.findAll('div', {'class':'col'}):
+        for header in section.findAll('h6'):
+            if header.get_text()==attribute:
+                for result in section.findAll('h5'):
+                    result = result.get_text().strip()
+    return result
+
 
 def read_database_text_file():
 	global pulledDictionary

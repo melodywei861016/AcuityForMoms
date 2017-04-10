@@ -1,8 +1,17 @@
 import json
-import urllib.request
+import urllib.request, requests
+import urllib
+import httplib2
+from bs4 import BeautifulSoup
 response = urllib.request.urlopen('https://udacity.com/public-api/v0/courses')
 json_response = json.loads(response.read())
 database = {}
+
+
+def make_soup(url):
+    thepage = urllib.request.urlopen(url)
+    soupdata = BeautifulSoup(thepage, 'lxml')
+    return soupdata
 
 #Adding Udacity courses to the database
 def create_database():
@@ -25,6 +34,26 @@ def create_database():
 
     with open('UdacityDatabaseFile.json', 'w') as myFile:
         json.dump(database, myFile)
+
+def test():
+    return get_rating(make_soup('https://www.udacity.com/course/predictive-analytics-for-business--nd008'))
+
+
+def get_rating(soup):
+    section = soup.find('div', {'class':'stats__average'})
+    result = section.find('span')
+    print(result)
+    #print(soup.findAll('span', {'data-reviews-avg-rating': ''}))
+
+    #return result
+
+def time_cost_skill_level_of_course(soup, attribute):
+    for section in soup.findAll('div', {'class':'col'}):
+        for header in section.findAll('h6'):
+            if header.get_text()==attribute:
+                for result in section.findAll('h5'):
+                    result = result.get_text().strip()
+    return result
 
 categorized_courses = {}
 for track in json_response['tracks']:
