@@ -1,4 +1,4 @@
-import requests, json, pickle, urllib, urllib.request, httplib2
+import requests, json, pickle, urllib, urllib.request
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
 
@@ -36,7 +36,7 @@ def create_database():
 			database[dictionary_elem]['level'] = level_response['instructional_level']
 			database[dictionary_elem]['image'] = course['image_480x270']
 			database[dictionary_elem]['price'] = course['price']
-			database[dictionary_elem]['rating'] = course['avg_rating']
+			# database[dictionary_elem]['rating'] = course['avg_rating']
 		    
 		    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
 		    
@@ -46,15 +46,20 @@ def create_database():
 			#course_category_name = course_category_response['primary_category']['title']
 			
 			page = requests.get(database[dictionary_elem]['homepage'])
+			print(database[dictionary_elem]['homepage'])
 			soup = BeautifulSoup(page.content, 'html.parser')
-			database[dictionary_elem]['prerequisites'] = soup.find_all(class_='requirements__item')[0].get_text()
 			expected_learn = soup.find_all(class_='what-you-get__text')
 			expected_learn_string = ""
 			for i in expected_learn:
-				expected_learn_string += i.get_text() + "\n"
+                expected_learn_string += i.get_text() + "\n"
 			database[dictionary_elem]['expected learning'] = expected_learn_string
 			database[dictionary_elem]['time to complete'] = soup.find_all(class_='curriculum-header-length')[0].get_text().strip() 
 			database[dictionary_elem]['owner name'] = soup.find_all(class_='instructor__job-title')[0].get_text().strip()
+			pre_req = soup.find_all(class_='requirements__item')
+			if len(pre_req) == 0:
+                database[dictionary_elem]['prerequisites'] = "none"
+            else:
+                database[dictionary_elem]['prerequisites'] = pre_req[0].get_text()
 
 		with open('UdemyDatabaseFile.json', 'w') as myFile:
 			json.dump(database, myFile)
@@ -83,12 +88,3 @@ def webpage_exists(webpage):
     c = httplib2.Http()
     response = c.request(webpage, 'HEAD')
     return int(response[0]['status']) < 400
-
-
-
-
-
-
-
-
-
