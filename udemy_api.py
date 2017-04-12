@@ -22,6 +22,14 @@ def create_database():
 		4) execute the function until there are no more errors
 		5) The database file should be formed
 	"""
+
+	def assign_webscraped_attribute(soup_result):
+		if soup_result is None:
+			return 'N/A'
+		else:
+			return soup_result.get_text().strip()
+
+
 	global json_response, current_url
 	while 'detail' not in json_response.keys():
 		for course in json_response['results']:
@@ -46,13 +54,18 @@ def create_database():
 			for i in expected_learn:
 				expected_learn_string += i.get_text() + "\n"
 			database[dictionary_elem]['expected learning'] = expected_learn_string
-			database[dictionary_elem]['time to complete'] = soup.find(class_='curriculum-header-length').get_text().strip() 
-			database[dictionary_elem]['owner name'] = soup.find(class_='instructor__job-title').get_text().strip()
-			pre_req = soup.find(class_='requirements__item')
-			if pre_req is None:
-				database[dictionary_elem]['prerequisites'] = "N/A"
-			else:
-				database[dictionary_elem]['prerequisites'] = pre_req.get_text()
+
+			database[dictionary_elem]['time to complete'] = assign_webscraped_attribute(soup.find(class_='curriculum-header-length'))
+			database[dictionary_elem]['owner name'] = assign_webscraped_attribute(soup.find(class_='instructor__job-title'))
+			database[dictionary_elem]['prerequisites'] = assign_webscraped_attribute(soup.find(class_='requirements__item'))
+
+			#database[dictionary_elem]['time to complete'] = soup.find(class_='curriculum-header-length').get_text().strip() 
+			#database[dictionary_elem]['owner name'] = soup.find(class_='instructor__job-title').get_text().strip()
+			#pre_req = soup.find(class_='requirements__item')
+			#if pre_req is None:
+			#	database[dictionary_elem]['prerequisites'] = "N/A"
+			#else:
+			#	database[dictionary_elem]['prerequisites'] = pre_req.get_text()
 
 		with open('UdemyDatabaseFile.json', 'w') as myFile:
 			json.dump(database, myFile)
