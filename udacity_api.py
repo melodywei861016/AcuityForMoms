@@ -5,13 +5,20 @@ import httplib2
 from bs4 import BeautifulSoup
 response = urllib.request.urlopen('https://udacity.com/public-api/v0/courses')
 json_response = json.loads(response.read())
-database = {}
 
+#Selenium set up
+#Quick tutorial on how to use Selenium: https://www.youtube.com/watch?v=bhYulVzYRng
+from selenium import webdriver
+chrome_path = r"C:\Users\Celena\Downloads\chromedriver_win32\chromedriver.exe"
+driver = webdriver.Chrome(chrome_path)
 
 def make_soup(url):
+    """Using BeautifulSoup to read page HTML"""
     thepage = urllib.request.urlopen(url)
     soupdata = BeautifulSoup(thepage, 'lxml')
     return soupdata
+
+database = {}
 
 #Adding Udacity courses to the database
 def create_database():
@@ -31,60 +38,44 @@ def create_database():
         database[dictionary_elem]['time to complete'] = str(course['expected_duration']) + " " + course['expected_duration_unit']
         # database[dictionary_elem]['price'] =  
         database[dictionary_elem]['availablility_status'] = course['full_course_available']
+        database[dictionary_elem]['rating'] = get_course_ratings(course['homepage'])
+
+        #Getting 'subjects' course attribute
+        if webpage_exists(course['homepage']):
+            soup = make_soup(course['homepage'])
+            container = soup.findAll('script', {'type': 'application/ld+json'})
+            if container != []:
+                database[dictionary_elem]['subjects'] = json.loads(soup.find('script', {'type': 'application/ld+json'}).text)['subjectOfStudy']
 
     with open('UdacityDatabaseFile.json', 'w') as myFile:
         json.dump(database, myFile)
 
-def test():
-    return get_rating(make_soup('https://www.udacity.com/course/predictive-analytics-for-business--nd008'))
 
-
-def get_rating(soup):
-    section = soup.find('div', {'class':'stats__average'})
-    result = section.find('span')
-    print(result)
-    #print(soup.findAll('span', {'data-reviews-avg-rating': ''}))
-
-    #return result
-
-def time_cost_skill_level_of_course(soup, attribute):
-    for section in soup.findAll('div', {'class':'col'}):
-        for header in section.findAll('h6'):
-            if header.get_text()==attribute:
-                for result in section.findAll('h5'):
-                    result = result.get_text().strip()
-    return result
-
-categorized_courses = {}
-for track in json_response['tracks']:
-    track_name = track['name']
-    categorized_courses[track_name] = []
-    for course in track['courses']:
-        categorized_courses[track_name].append(course)
-
-def display_categorized_courses():
-    for category in categorized_courses.values():
-        #CATEGORY is a list of all courses that belong under the same subject category
-        #For categorized_courses, a key is the subject/track name (Ex. 'Data Science'), a value is a list of course names/keys that can be used to reference to their dictionaries using database[course_name]
-        for course in category:
-            print (course)
-            print (database[course])
+def get_course_ratings(url):
+        """Using Selenium to retrieve the course ratings from Udacity"""
+        driver.get(url)
+        try:
+            return driver.find_element_by_xpath("""//*[@id="reviews"]/div/div[1]/div/div[1]/span""").text
+        except: 
+            return 'N/A'
 
 def read_database_json_file():
     return json.loads(open('UdacityDatabaseFile.json').read())
 
+def test():
+    for course in json_response['courses']:
+        if webpage_exists(course['homepage']):
+            soup = make_soup(course['homepage'])
+            location = soup.findAll('script', {'type': 'application/ld+json'})
+            if location != []:
+                dic = soup.findAll('script', {'type': 'application/ld+json'})[0].text
+                print (json.loads(dic)['subjectOfStudy'], course['homepage'])
+        else:
+            print('N/A', course['homepage'])
 
 
-"""The important data that we need:
-title
-homepage
-short description
-level
-prerequisites
-expected learning
-image 
-owner name (what university)
-time to complete
-price
-if free price of the certificate
-time frame when you can follow the course (some courses are not always available)"""
+def webpage_exists(webpage):
+    c = httplib2.Http()
+    response = c.request(webpage, 'HEAD')
+    return int(response[0]['status']) < 400
+

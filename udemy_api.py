@@ -22,13 +22,11 @@ def create_database():
 		4) execute the function until there are no more errors
 		5) The database file should be formed
 	"""
-
 	def assign_webscraped_attribute(soup_result):
 		if soup_result is None:
 			return 'N/A'
 		else:
 			return soup_result.get_text().strip()
-
 
 	global json_response, current_url
 	while 'detail' not in json_response.keys():
@@ -46,7 +44,13 @@ def create_database():
 			database[dictionary_elem]['price'] = course['price']
 			ratings_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=avg_rating'.format(course['id']))
 			database[dictionary_elem]['rating'] = ratings_response['avg_rating']
-			
+			subjects_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=primary_subcategory'.format(course['id']))
+			if subjects_response['primary_subcategory'] is not None:
+				database[dictionary_elem]['subjects'] = [subjects_response['primary_subcategory']['title']]
+			else:
+				database[dictionary_elem]['subjects'] = []
+
+
 			#Webscraping code to get the rest of the class attributes
 			soup = make_soup(database[dictionary_elem]['homepage'])
 			expected_learn = soup.find_all(class_='what-you-get__text')
@@ -59,13 +63,6 @@ def create_database():
 			database[dictionary_elem]['owner name'] = assign_webscraped_attribute(soup.find(class_='instructor__job-title'))
 			database[dictionary_elem]['prerequisites'] = assign_webscraped_attribute(soup.find(class_='requirements__item'))
 
-			#database[dictionary_elem]['time to complete'] = soup.find(class_='curriculum-header-length').get_text().strip() 
-			#database[dictionary_elem]['owner name'] = soup.find(class_='instructor__job-title').get_text().strip()
-			#pre_req = soup.find(class_='requirements__item')
-			#if pre_req is None:
-			#	database[dictionary_elem]['prerequisites'] = "N/A"
-			#else:
-			#	database[dictionary_elem]['prerequisites'] = pre_req.get_text()
 
 		with open('UdemyDatabaseFile.json', 'w') as myFile:
 			json.dump(database, myFile)
@@ -74,6 +71,25 @@ def create_database():
 		print(current_url)
 		json_response = make_response(current_url)
 
+
+def update_database():
+	saved_database = read_database_json_file()
+	
+	#saved_database.update(***CODE***)
+
+
+	global json_response, current_url
+	while 'detail' not in json_response.keys():
+		for course in json_response['results']:
+			subjects_response = make_response('https://www.udemy.com/api-2.0/courses/{}?fields[course]=primary_subcategory'.format(course['id']))
+			saved_database[str(course['id'])].update({'subjects': [subjects_response['primary_subcategory']['title']]})
+
+		current_url = json_response['next']
+		print(current_url)
+		json_response = make_response(current_url)
+
+	with open('UdemyDatabaseFile.json', 'w') as myFile:
+		json.dump(database, myFile)
 
 
 #Reading the file where the database is stored as a dictionary

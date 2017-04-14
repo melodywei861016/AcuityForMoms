@@ -7,7 +7,6 @@ import urllib.request
 import httplib2
 from bs4 import BeautifulSoup
 
-
 url = 'https://api.edx.org/oauth2/v1/access_token'
 r = requests.post(url, dict(
 	grant_type='client_credentials',
@@ -21,10 +20,17 @@ headers = {
     'Authorization': 'JWT ' + access_token,
 }
 
+#Selenium set up
+#Quick tutorial on how to use Selenium: https://www.youtube.com/watch?v=bhYulVzYRng
+from selenium import webdriver
+chrome_path = r"C:\Users\Celena\Downloads\chromedriver_win32\chromedriver.exe"
+driver = webdriver.Chrome(chrome_path)
+
 def make_soup(url):
-    thepage = urllib.request.urlopen(url)
-    soupdata = BeautifulSoup(thepage, "lxml")
-    return soupdata
+	"""Using BeautifulSoup to read page HTML"""
+	thepage = urllib.request.urlopen(url)
+	soupdata = BeautifulSoup(thepage, "lxml")
+	return soupdata
 
 def make_response(url):
 	response = requests.get(url, headers=headers)
@@ -34,10 +40,6 @@ def make_response(url):
 full_catalog_info =  make_response('https://api.edx.org/catalog/v1/catalogs/')['results'][0]
 
 json_response = make_response('https://api.edx.org/catalog/v1/catalogs/' + str(full_catalog_info['id']) + '/courses')
-
-#print(json_response['results'])
-
-#print(json_response['results'][0]['course_runs'])
 
 
 database = {}
@@ -50,13 +52,13 @@ def create_database():
 	    database[dictionary_elem] = {} #the course's key is the key to the dictionary. Its corresponding value is a dictionary of the course's components (time, cost, etc.)
 
 	    database[dictionary_elem]['title'] = course['title']
-	    database[dictionary_elem]['homepage'] = course['marketing_url']
+	    database[dictionary_elem]['homepage'] = course['course_runs'][0]['marketing_url']
 	    database[dictionary_elem]['short description'] = course['short_description']
 	    database[dictionary_elem]['level'] = course['level_type'] 
 	    database[dictionary_elem]['prerequisites'] = course['prerequisites']
 	    database[dictionary_elem]['expected learning'] = course['expected_learning_items']
 	    database[dictionary_elem]['image'] = course['image']['src']
-	    database[dictionary_elem]['owner name'] = course['owners'][0]['name']	    
+	    database[dictionary_elem]['owner name'] = course['owners'][0]['name']	
 	    
 	    if course['course_runs'][0]['start'] != None and course['course_runs'][0]['end'] != None:
 	    	#subtract the date to get weeks
@@ -68,28 +70,31 @@ def create_database():
 	    database[dictionary_elem]['time to complete'] = duration
 	    
 	    database[dictionary_elem]['price'] = course['course_runs'][0]['seats'][0]['price'] + ' ' + course['course_runs'][0]['seats'][0]['currency']
+	    database[dictionary_elem]['subjects'] = [course['subjects'][0]['name']] #A list of subjects
 	    #database[dictionary_elem]['availablility_status'] = course['full_course_available']
-	    #database[dictionary_elem]['rating'] = 
+
+	    database[dictionary_elem]['rating'] = get_course_ratings(course['course_runs'][0]['marketing_url'])
 	    
 	with open('EdXDatabaseFile.json', 'w') as myFile:
 		json.dump(database, myFile)
 
-def test():
-	return get_rating(make_soup('https://www.edx.org/course/smart-cities-ethx-ethx-fc-03x-0'))
+
+def get_course_ratings(url):
+        """Using Selenium to retrieve the course ratings from EdX"""
+        driver.get(url)
+        num_reviews = driver.find_element_by_xpath("""//*[@id="course-about-area"]/div[1]/span/a""").text
+        if num_reviews == '0 Reviews':
+        	return 'N/A'
+        return driver.find_element_by_xpath("""//*[@id="course-about-area"]/div[1]/span/span[1]""").text
 
 
-def get_rating(soup):
-	return soup
-    #return soup.find('span', {'class':'ct-widget-stars'})
-    #return result
+def update_database():
+	saved_database = read_database_json_file()
+	
+	#saved_database.update(***CODE***)
 
-def time_cost_skill_level_of_course(soup, attribute):
-    for section in soup.findAll('div', {'class':'col'}):
-        for header in section.findAll('h6'):
-            if header.get_text()==attribute:
-                for result in section.findAll('h5'):
-                    result = result.get_text().strip()
-    return result
+	with open('EdXDatabaseFile.json', 'w') as myFile:
+		json.dump(database, myFile)
 
 
 def read_database_text_file():
