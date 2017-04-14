@@ -39,6 +39,7 @@ def create_database():
         # database[dictionary_elem]['price'] =  
         database[dictionary_elem]['availablility_status'] = course['full_course_available']
         database[dictionary_elem]['rating'] = get_course_ratings(course['homepage'])
+        database[dictionary_elem]['price'] = '0'
 
         #Getting 'subjects' course attribute
         if webpage_exists(course['homepage']):
