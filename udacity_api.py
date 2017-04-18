@@ -47,6 +47,11 @@ def create_database():
             container = soup.findAll('script', {'type': 'application/ld+json'})
             if container != []:
                 database[dictionary_elem]['subjects'] = json.loads(soup.find('script', {'type': 'application/ld+json'}).text)['subjectOfStudy']
+            else:
+                database[dictionary_elem]['subjects'] = []
+        else:
+            database[dictionary_elem]['subjects'] = []
+
 
     with open('UdacityDatabaseFile.json', 'w') as myFile:
         json.dump(database, myFile)
